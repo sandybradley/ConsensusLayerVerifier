@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "merkle-proof-generator"
+version = "0.1.0"
+description = "Generates merkle proofs from beacon chain state, for on-chain verification."
+authors = ["sandybradley <sandy.bradley@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "merkle_proof_generator" }]
+
+[tool.poetry.dependencies]
+python = "3.9.19"
+eth2spec = { git = "https://github.com/ethereum/consensus-specs.git", branch = "dev" }
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
