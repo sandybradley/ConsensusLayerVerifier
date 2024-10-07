@@ -70,7 +70,7 @@ contract ConsensusLayerVerifierTest is Test {
         assertEq(headerRoot, root);
     }
 
-    function testVerifyValidatorWithdrawalAddress() public view {
+    function testVerifyValidatorValidator() public view {
         // Validator index 123 @ slot 10103527
         bytes32 stateRoot = 0xc3c0e26f64feb8793e3fe8e9eab6b187b9dca0672e96df5de92746cad170803c;
         ConsensusLayerVerifier.Validator
@@ -86,7 +86,7 @@ contract ConsensusLayerVerifierTest is Test {
             });
         bytes32[] memory proof = jsonProof.witness;
         LibSort.reverse(proof);
-        // verify validator
+        // verify validator against state root
         bool valid = verify.verifyValidator(
             stateRoot,
             validator,
@@ -94,9 +94,25 @@ contract ConsensusLayerVerifierTest is Test {
             jsonProof.gindex
         );
         assertTrue(valid);
-        // verify active
+        // verify validator against roots contract
+        valid = verify.verifyValidator(
+            header,
+            validator,
+            proof,
+            jsonProof.gindex
+        );
+        assertTrue(valid);
+        // verify active against state root
         valid = verify.verifyValidatorActive(
             stateRoot,
+            validator,
+            proof,
+            jsonProof.gindex
+        );
+        assertTrue(valid);
+        // verify active against roots contract
+        valid = verify.verifyValidatorActive(
+            header,
             validator,
             proof,
             jsonProof.gindex
@@ -110,6 +126,7 @@ contract ConsensusLayerVerifierTest is Test {
                 )
             )
         );
+        // verify against state root
         valid = verify.verifyValidatorWithdrawalAddress(
             stateRoot,
             validator,
@@ -117,6 +134,16 @@ contract ConsensusLayerVerifierTest is Test {
             jsonProof.gindex,
             withdrawalAddress
         );
+        assertTrue(valid);
+        // verify against roots contract
+        valid = verify.verifyValidatorWithdrawalAddress(
+            stateRoot,
+            validator,
+            proof,
+            jsonProof.gindex,
+            withdrawalAddress
+        );
+        assertTrue(valid);
     }
 
     // Helpers

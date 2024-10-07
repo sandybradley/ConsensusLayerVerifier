@@ -3,7 +3,7 @@
 source .env
 
 # URL to retrieve the JSON from
-URL=$BEACON_RPC "eth/v1/beacon/headers"
+URL=$BEACON_RPC "/eth/v1/beacon/headers"
 
 # File to save the extracted message data
 OUTPUT_FILE="data/beacon_block_header.json"

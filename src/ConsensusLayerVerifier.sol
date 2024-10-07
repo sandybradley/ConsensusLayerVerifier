@@ -92,6 +92,7 @@ contract ConsensusLayerVerifier {
      * @notice Verifies the Merkle root of a given Beacon block header against beacon roots contract
      * @param header The Beacon block header data
      * @return validRoot True if beacon roots call matches Merkleized Header
+     * @dev will only work for slots within the last 24 hours
      */
     function verifyBeaconHeaderMerkleRoot(
         BeaconBlockHeader calldata header
@@ -200,6 +201,34 @@ contract ConsensusLayerVerifier {
         );
     }
 
+    /**
+     * @notice Verify a merkle proof of the validator against beacon roots contract
+     * @param header The Beacon block header data
+     * @param validator Validator struct data
+     * @param proof merkle proof of the validator against state root in header
+     * @param gIndex global index of validator
+     * @return validValidator True for successful verification
+     */
+    function verifyValidator(
+        BeaconBlockHeader calldata header,
+        Validator calldata validator,
+        bytes32[] calldata proof,
+        uint256 gIndex
+    ) public view returns (bool validValidator) {
+        bytes32 validatorRoot = calculateValidatorMerkleRoot(validator);
+
+        validValidator = MerkleTree.verifyMerkleLeaf(
+            proof,
+            header.stateRoot,
+            validatorRoot,
+            gIndex
+        );
+
+        if (!validValidator) return false;
+
+        validValidator = verifyBeaconHeaderMerkleRoot(header);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*            LIQUID STAKING TOKEN VERIFICATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -234,6 +263,30 @@ contract ConsensusLayerVerifier {
     }
 
     /**
+     * @notice Verify withdrawal address of a validator by merkle proof of the validator against beacon roots contract
+     * @param header The Beacon block header data
+     * @param validator Validator struct data
+     * @param proof merkle proof of the validator
+     * @param gIndex global index of validator
+     * @param withdrawalAddress staker address to verify
+     * @return validValidator True for successful verification
+     */
+    function verifyValidatorWithdrawalAddress(
+        BeaconBlockHeader calldata header,
+        Validator calldata validator,
+        bytes32[] calldata proof,
+        uint256 gIndex,
+        address withdrawalAddress
+    ) public view returns (bool validValidator) {
+        if (
+            address(uint160(uint256(validator.withdrawalCredentials))) !=
+            withdrawalAddress
+        ) revert FieldMismatch();
+
+        validValidator = verifyValidator(header, validator, proof, gIndex);
+    }
+
+    /**
      * @notice Verify validator is active by merkle proof of the validator against a beacon state root
      * @param beaconStateRoot merkle root of the beacon state
      * @param validator Validator struct data
@@ -257,6 +310,25 @@ contract ConsensusLayerVerifier {
         );
     }
 
+    /**
+     * @notice Verify validator is active by merkle proof of the validator against beacon roots contract
+     * @param header The Beacon block header data
+     * @param validator Validator struct data
+     * @param proof merkle proof of the validator
+     * @param gIndex global index of validator
+     * @return validValidator True for successful verification
+     */
+    function verifyValidatorActive(
+        BeaconBlockHeader calldata header,
+        Validator calldata validator,
+        bytes32[] calldata proof,
+        uint256 gIndex
+    ) public view returns (bool validValidator) {
+        if (validator.slashed == true) revert FieldMismatch();
+
+        validValidator = verifyValidator(header, validator, proof, gIndex);
+    }
+
     // Todo: deposits
     // Todo: validator balances
     // Todo: voluntary exits
@@ -265,9 +337,16 @@ contract ConsensusLayerVerifier {
     /*                      HELPERS                               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Beacon-chain genesis timestamp, helpful calculating a timestamp based on a slot (every 12 s)
+    /**
+     * @notice Beacon-chain genesis timestamp, helpful calculating a timestamp based on a slot (every 12 s)
+     */
     uint256 public constant GENESIS_SLOT_TIMESTAMP = 1606824023;
 
+    /**
+     * @notice Calculate timestamp from slot number
+     * @param slot slot number to get timestamp for
+     * @return timestamp of slot
+     */
     function calculateTimestampBySlot(
         uint256 slot
     ) public pure returns (uint256 timestamp) {
