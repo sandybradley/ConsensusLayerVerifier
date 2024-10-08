@@ -263,30 +263,6 @@ contract ConsensusLayerVerifier {
     }
 
     /**
-     * @notice Verify withdrawal address of a validator by merkle proof of the validator against beacon roots contract
-     * @param header The Beacon block header data
-     * @param validator Validator struct data
-     * @param proof merkle proof of the validator
-     * @param gIndex global index of validator
-     * @param withdrawalAddress staker address to verify
-     * @return validValidator True for successful verification
-     */
-    function verifyValidatorWithdrawalAddress(
-        BeaconBlockHeader calldata header,
-        Validator calldata validator,
-        bytes32[] calldata proof,
-        uint256 gIndex,
-        address withdrawalAddress
-    ) public view returns (bool validValidator) {
-        if (
-            address(uint160(uint256(validator.withdrawalCredentials))) !=
-            withdrawalAddress
-        ) revert FieldMismatch();
-
-        validValidator = verifyValidator(header, validator, proof, gIndex);
-    }
-
-    /**
      * @notice Verify validator is active by merkle proof of the validator against a beacon state root
      * @param beaconStateRoot merkle root of the beacon state
      * @param validator Validator struct data
@@ -308,25 +284,6 @@ contract ConsensusLayerVerifier {
             proof,
             gIndex
         );
-    }
-
-    /**
-     * @notice Verify validator is active by merkle proof of the validator against beacon roots contract
-     * @param header The Beacon block header data
-     * @param validator Validator struct data
-     * @param proof merkle proof of the validator
-     * @param gIndex global index of validator
-     * @return validValidator True for successful verification
-     */
-    function verifyValidatorActive(
-        BeaconBlockHeader calldata header,
-        Validator calldata validator,
-        bytes32[] calldata proof,
-        uint256 gIndex
-    ) public view returns (bool validValidator) {
-        if (validator.slashed == true) revert FieldMismatch();
-
-        validValidator = verifyValidator(header, validator, proof, gIndex);
     }
 
     // Todo: deposits

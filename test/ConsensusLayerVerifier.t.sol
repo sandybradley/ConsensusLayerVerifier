@@ -110,14 +110,7 @@ contract ConsensusLayerVerifierTest is Test {
             jsonProof.gindex
         );
         assertTrue(valid);
-        // verify active against roots contract
-        valid = verify.verifyValidatorActive(
-            header,
-            validator,
-            proof,
-            jsonProof.gindex
-        );
-        assertTrue(valid);
+
         // verify withdrawal address
         address withdrawalAddress = address(
             uint160(
@@ -127,15 +120,6 @@ contract ConsensusLayerVerifierTest is Test {
             )
         );
         // verify against state root
-        valid = verify.verifyValidatorWithdrawalAddress(
-            stateRoot,
-            validator,
-            proof,
-            jsonProof.gindex,
-            withdrawalAddress
-        );
-        assertTrue(valid);
-        // verify against roots contract
         valid = verify.verifyValidatorWithdrawalAddress(
             stateRoot,
             validator,
